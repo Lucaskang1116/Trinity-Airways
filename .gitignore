@@ -1,0 +1,9 @@
+# 원본 데이터(대용량) 및 캐시는 커밋 제외
+data/raw/
+data/processed/*.pkl
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.wrangler/
+dist/
