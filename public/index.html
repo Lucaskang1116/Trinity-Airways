@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2025 화물 매출 분석 대시보드 | Trinity Airways (ICN)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">TW</div>
+    <div>
+      <h1 id="page-title">화물 매출 분석 대시보드</h1>
+      <p id="meta-line">Quality Audit Analysis · Station ICN · 2025.01.01 ~ 12.31</p>
+    </div>
+  </div>
+  <div class="year-bar">
+    <div class="year-seg" id="year-seg"></div>
+    <span class="year-note" id="year-note"></span>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="overview">종합</button>
+    <button class="tab yoy-tab" data-tab="yoy">전년 대비(YoY)</button>
+    <button class="tab" data-tab="monthly">월별 추이</button>
+    <button class="tab" data-tab="route">노선/권역</button>
+    <button class="tab" data-tab="customer">고객사(해외발/인천발)</button>
+    <button class="tab" data-tab="agent">대리점</button>
+    <button class="tab" data-tab="shc">품목(SHC)</button>
+    <button class="tab" data-tab="aircraft">기종</button>
+    <button class="tab" data-tab="pricing">단가/무게</button>
+    <button class="tab" data-tab="quality">감사/청구</button>
+  </nav>
+</header>
+
+<main id="app">
+  <!-- ========== 종합 ========== -->
+  <section class="panel active" id="tab-overview">
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>월별 매출 및 유상중량 추이</h3>
+        <div class="chart-wrap"><canvas id="ov-monthly"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>권역별 매출 비중</h3>
+        <div class="chart-wrap"><canvas id="ov-region"></canvas></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>대리점 그룹 Top 10</h3>
+        <div class="chart-wrap tall"><canvas id="ov-agent"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>노선 Top 10 (매출)</h3>
+        <div class="chart-wrap tall"><canvas id="ov-route"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>핵심 인사이트</h3>
+      <ol class="insights" id="insights"></ol>
+    </div>
+  </section>
+
+  <!-- ========== YoY ========== -->
+  <section class="panel" id="tab-yoy">
+    <p class="note" id="yoy-note"></p>
+    <div class="kpi-grid" id="yoy-kpi"></div>
+    <div class="grid-2">
+      <div class="card"><h3 id="yoy-monthly-title">월별 매출 비교</h3><div class="chart-wrap"><canvas id="y-monthly"></canvas></div></div>
+      <div class="card"><h3>누적 매출 비교</h3><div class="chart-wrap"><canvas id="y-cum"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>월별 유상중량 · kg당 단가 비교</h3><div class="chart-wrap"><canvas id="y-yield"></canvas></div></div>
+      <div class="card"><h3>권역별 증감 (전년 동기 대비)</h3><div class="chart-wrap"><canvas id="y-region"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>노선별 매출 증감 기여 Top 10 (증가 / 감소)</h3><div class="chart-wrap tall"><canvas id="y-route"></canvas></div></div>
+      <div class="card"><h3>고객사별 매출 증감 기여 Top 10 (증가 / 감소)</h3><div class="chart-wrap tall"><canvas id="y-customer"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>기종별 매출 비교</h3><div class="chart-wrap"><canvas id="y-aircraft"></canvas></div></div>
+      <div class="card"><h3>해외발 / 인천발 업체 비교</h3><div class="chart-wrap"><canvas id="y-ctype"></canvas></div></div>
+    </div>
+    <div class="card"><h3>YoY 인사이트</h3><ol class="insights" id="yoy-insights"></ol></div>
+    <div class="card">
+      <div class="card-head"><h3>상세 비교표</h3>
+        <div class="seg" id="y-seg">
+          <button class="seg-btn active" data-view="customer">고객사</button><button class="seg-btn" data-view="route">노선</button>
+          <button class="seg-btn" data-view="region">권역</button><button class="seg-btn" data-view="dest">목적지</button>
+          <button class="seg-btn" data-view="agent_group">대리점그룹</button><button class="seg-btn" data-view="aircraft">기종</button>
+          <button class="seg-btn" data-view="shc_primary">SHC</button><button class="seg-btn" data-view="currency">통화</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="y-table"></div>
+    </div>
+    <div class="card"><h3>월별 상세 비교</h3><div class="table-wrap" id="y-monthly-table"></div></div>
+  </section>
+
+  <!-- ========== 월별 ========== -->
+  <section class="panel" id="tab-monthly">
+    <div class="grid-2">
+      <div class="card"><h3>월별 매출 · 전월 대비 증감률</h3><div class="chart-wrap"><canvas id="m-rev"></canvas></div></div>
+      <div class="card"><h3>월별 AWB 건수 · AWB당 평균 매출</h3><div class="chart-wrap"><canvas id="m-awb"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>월별 kg당 단가(Yield) 추이</h3><div class="chart-wrap"><canvas id="m-yield"></canvas></div></div>
+      <div class="card"><h3>누적 매출 추이</h3><div class="chart-wrap"><canvas id="m-cum"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>분기별 매출</h3><div class="chart-wrap"><canvas id="m-quarter"></canvas></div></div>
+      <div class="card"><h3>요일별 매출 (First Flight Date 기준)</h3><div class="chart-wrap"><canvas id="m-weekday"></canvas></div></div>
+    </div>
+    <div class="card"><h3>일별 매출 추이 (7일 이동평균 포함)</h3><div class="chart-wrap"><canvas id="m-daily"></canvas></div></div>
+    <div class="card"><h3>월별 상세</h3><div class="table-wrap" id="m-table"></div></div>
+  </section>
+
+  <!-- ========== 노선/권역 ========== -->
+  <section class="panel" id="tab-route">
+    <div class="grid-2">
+      <div class="card"><h3>권역별 월별 매출 (누적)</h3><div class="chart-wrap tall"><canvas id="r-region-monthly"></canvas></div></div>
+      <div class="card"><h3>방향별 (한국출발 vs 해외출발) 월별 매출</h3><div class="chart-wrap tall"><canvas id="r-direction"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>출발지(Origin) Top 10</h3><div class="chart-wrap tall"><canvas id="r-origin"></canvas></div></div>
+      <div class="card"><h3>목적지(Destination) Top 10</h3><div class="chart-wrap tall"><canvas id="r-dest"></canvas></div></div>
+    </div>
+    <div class="card"><h3>권역별 kg당 단가(Yield) 비교</h3><div class="chart-wrap"><canvas id="r-region-yield"></canvas></div></div>
+    <div class="card"><h3>노선 Top 30 상세</h3><div class="table-wrap" id="r-table"></div></div>
+    <div class="card"><h3>권역 × 방향 매트릭스</h3><div class="table-wrap" id="r-region-dir"></div></div>
+  </section>
+
+  <!-- ========== 고객사 ========== -->
+  <section class="panel" id="tab-customer">
+    <p class="note">※ 사용자 제공 「해외발/인천발 업체정보」(고객번호 기준)로 Bill-To Party Name을 매핑. 마스터 미등재 Bill-To(DONGNAM·TAMEX·RAON·항공사 등)는 출발지 기준 <b>추정 구분</b>이며 고객번호가 비어 있음.</p>
+    <div class="kpi-grid" id="c-kpi"></div>
+    <div class="grid-2">
+      <div class="card"><h3>해외발 vs 인천발 월별 매출</h3><div class="chart-wrap"><canvas id="c-type-monthly"></canvas></div></div>
+      <div class="card"><h3>해외발 vs 인천발 월별 kg당 단가</h3><div class="chart-wrap"><canvas id="c-type-yield"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>고객사별 매출 Top 15</h3><div class="chart-wrap tall"><canvas id="c-top"></canvas></div></div>
+      <div class="card"><h3>마스터 등재 고객사 월별 매출 (Top 12)</h3><div class="chart-wrap tall"><canvas id="c-monthly"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>고객사 실적표</h3>
+        <div class="seg" id="c-seg"><button class="seg-btn active" data-view="all">전체</button><button class="seg-btn" data-view="인천발">인천발</button><button class="seg-btn" data-view="해외발">해외발</button></div>
+      </div>
+      <div class="table-wrap" id="c-table"></div>
+    </div>
+    <div class="card"><h3 id="c-nodata-title">실적 없는 마스터 고객사</h3><div class="table-wrap" id="c-nodata"></div></div>
+  </section>
+
+  <!-- ========== 대리점 ========== -->
+  <section class="panel" id="tab-agent">
+    <div class="grid-2">
+      <div class="card"><h3>대리점 그룹 매출 (파레토 · 누적 비중)</h3><div class="chart-wrap tall"><canvas id="a-pareto"></canvas></div></div>
+      <div class="card"><h3>대리점 그룹 kg당 단가 vs 매출 규모</h3><div class="chart-wrap tall"><canvas id="a-bubble"></canvas></div></div>
+    </div>
+    <div class="card"><h3>월별 × 대리점 그룹 매출 (Top 15 + 기타)</h3><div class="chart-wrap tall"><canvas id="a-monthly"></canvas></div></div>
+    <div class="card">
+      <div class="card-head"><h3>대리점 순위</h3>
+        <div class="seg"><button class="seg-btn active" data-view="group">그룹(2차)</button><button class="seg-btn" data-view="raw">Bill-To(1차)</button></div>
+      </div>
+      <div class="table-wrap" id="a-table"></div>
+    </div>
+  </section>
+
+  <!-- ========== SHC ========== -->
+  <section class="panel" id="tab-shc">
+    <div class="grid-2">
+      <div class="card"><h3>SHC 태그별 매출 Top 15 (중복 포함)</h3><div class="chart-wrap tall"><canvas id="s-tags"></canvas></div></div>
+      <div class="card"><h3>SHC 태그별 kg당 단가 (300건 이상)</h3><div class="chart-wrap tall"><canvas id="s-yield"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>대표 SHC(GEN 제외 첫 코드) 매출 비중</h3><div class="chart-wrap tall"><canvas id="s-primary"></canvas></div></div>
+      <div class="card"><h3>대표 SHC 월별 추이 (Top 8)</h3><div class="chart-wrap tall"><canvas id="s-primary-monthly"></canvas></div></div>
+    </div>
+    <div class="card"><h3>SHC 태그 상세</h3><div class="table-wrap" id="s-table"></div></div>
+    <div class="card"><h3>Commodity(품명) Top 25</h3><div class="table-wrap" id="s-commodity"></div></div>
+  </section>
+
+  <!-- ========== 기종 ========== -->
+  <section class="panel" id="tab-aircraft">
+    <p class="note">※ 기종 정보는 「일자별 기종현황_2025년」의 일자·편명별 기종만 매칭(매출·무게는 Quality Audit 기준). 매칭율 <span id="ac-join"></span>.</p>
+    <div class="grid-2">
+      <div class="card"><h3>기종별 매출 비중</h3><div class="chart-wrap"><canvas id="ac-share"></canvas></div></div>
+      <div class="card"><h3>기종별 월별 매출</h3><div class="chart-wrap"><canvas id="ac-monthly"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>기종별 편당 유상중량 · kg당 단가</h3><div class="chart-wrap"><canvas id="ac-perflight"></canvas></div></div>
+      <div class="card"><h3>기종 계열 × 권역 매출</h3><div class="chart-wrap"><canvas id="ac-region"></canvas></div></div>
+    </div>
+    <div class="card"><h3>기종별 상세</h3><div class="table-wrap" id="ac-table"></div></div>
+    <div class="card"><h3>기종 × 노선 Top 30</h3><div class="table-wrap" id="ac-route"></div></div>
+  </section>
+
+  <!-- ========== 단가/무게 ========== -->
+  <section class="panel" id="tab-pricing">
+    <div class="grid-2">
+      <div class="card"><h3>유상중량 구간별 AWB 건수 · 매출</h3><div class="chart-wrap"><canvas id="p-weight"></canvas></div></div>
+      <div class="card"><h3>kg당 단가 구간별 분포</h3><div class="chart-wrap"><canvas id="p-yield"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>화물 밀도 구분 (용적중량/실중량)</h3><div class="chart-wrap"><canvas id="p-density"></canvas></div></div>
+      <div class="card"><h3>통화별 매출 구성</h3><div class="chart-wrap"><canvas id="p-currency"></canvas></div></div>
+    </div>
+    <div class="card"><h3>권역별 월별 kg당 단가 추이</h3><div class="chart-wrap tall"><canvas id="p-region-yield"></canvas></div></div>
+    <div class="card"><h3>통화별 상세 (월평균 환율 적용)</h3><div class="table-wrap" id="p-currency-table"></div></div>
+  </section>
+
+  <!-- ========== 감사/청구 ========== -->
+  <section class="panel" id="tab-quality">
+    <div class="grid-2">
+      <div class="card"><h3>Spot Rate vs 계약/Tariff 매출</h3><div class="chart-wrap"><canvas id="q-spot"></canvas></div></div>
+      <div class="card"><h3>Spot Rate 월별 매출 비중</h3><div class="chart-wrap"><canvas id="q-spot-monthly"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>청구 상태별 매출</h3><div class="chart-wrap"><canvas id="q-billing"></canvas></div></div>
+      <div class="card"><h3>IATA 요금 vs 시장요금 vs 실제 청구</h3><div class="chart-wrap"><canvas id="q-iata"></canvas></div></div>
+    </div>
+    <div class="card"><h3>감사 불일치 유형 (Manually Resolved)</h3><div class="table-wrap" id="q-disc"></div></div>
+    <div class="card"><h3>감사 상태</h3><div class="table-wrap" id="q-audit"></div></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span id="foot-meta"></span> · 금액: 원화(월평균 환율 환산) · 무게: Audited Chargeable Weight · 출처: Quality Audit Analysis(QLTAUDANLRPT)
+</footer>
+
+<script src="static/app.js"></script>
+</body>
+</html>
